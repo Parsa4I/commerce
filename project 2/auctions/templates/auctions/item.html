@@ -1,0 +1,96 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+
+{% if item.is_sold %}
+    <div id="sold"><strong>SOLD</strong></div>
+    <br>
+{% endif %}
+
+<div class="title">
+    <h2>{{item.title}}: {{item.summary}}</h2>
+    {% if not request.user.is_anonymous %}
+        <form action="{% url 'add_to_watchlist' item.id %}" method="post">
+            {% csrf_token %}
+            {% if is_watched %}
+                <input type="submit" value="Watchlist" id="watchlist_added" title="{{watchlistmsg}}">
+            {% else %}
+                <input type="submit" value="Watchlist" id="watchlist" title="{{watchlistmsg}}">
+            {% endif %}
+        </form>
+    {% endif %}
+</div>
+
+<a href="{{item.image}}" target="_blank">
+    <img src="{{item.image}}" alt="{{item.title}}" class="item-img">
+</a>
+<hr>
+
+{% if your_bid != '' %}
+    <div id="your-bid">{{your_bid}}</div>
+    <br><br>
+{% endif %}
+
+<div class="high-bid">
+{% if item.bid_number == 0 %}
+    <div>
+        Starting Bid: <span class="white">{{item.starting_bid}}</span> $
+        <span style="float: right;"><span class="white">{{bidnum}}</span> bid(s) so far</span>
+    </div>
+{% else %}
+    <div>
+        High Bid: <span class="white">{{item.high_bid}}</span> $
+        <span style="float: right;"><span class="white">{{bidnum}}</span> bid(s) so far</span>
+    </div>
+{% endif %}
+</div>
+<br>
+
+{% if user.is_authenticated %}
+    {% if not item.is_sold %}
+        {% if request.user != item.seller %}
+            <form action="{% url 'item' item.id %}" method="post">
+                {% csrf_token %}
+                {{bidform}}
+                <input type="submit" name="place_bid" value="Place Bid" class="bidbtn">
+                <p style="color: red;">{{warning}}</p>
+            </form>
+        {% else %}
+            <form action="{% url 'item' item.id %}" method="post">
+                {% csrf_token %}
+                <input type="submit" name="end_auction" value="End Auction" class="bidbtn">
+            </form>
+        {% endif %}
+    {% endif %}
+{% elif not item.is_sold %}
+    <div><a href="{% url 'login' %}">Log in</a> to be able to place your bid.</div>
+{% endif %}
+<hr>
+
+<h3>Description</h3>
+<p><strong>Listed by: </strong>{{seller}}</p>
+<p><strong>Category: </strong>{{category}}</p>
+<p style="text-align: justify;">{{item.description}}</p>
+<hr>
+
+<h3>Comments</h3>
+{% if user.is_authenticated %}
+<form action="{% url 'item' item.id %}" method="post">
+    {% csrf_token %}
+    <textarea name="comment-txt" cols="70" rows="7" style="max-width: 100%;" maxlength="1000" required></textarea>
+    <br>
+    <input type="submit" name="comment" value="Comment" class="bidbtn">
+</form>
+<hr>
+{% endif %}
+{% for comment in comments %}
+    <div class="comment">
+        <p><strong>{{comment.user}}</strong></p>
+        <hr>
+        <p>{{comment.comment_text}}</p>
+    </div>
+    {% empty %}
+    <strong>No Comments</strong>
+{% endfor %}
+
+{% endblock %}
